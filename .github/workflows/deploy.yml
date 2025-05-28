@@ -37,7 +37,7 @@ jobs:
             sudo php artisan down || true
 
             # Install Composer dependencies
-            composer install --no-dev --optimize-autoloader
+            sudo composer install --no-dev --optimize-autoloader
 
             # Run database migrations
             sudo php artisan migrate --force
