@@ -1,0 +1,60 @@
+name: Deploy Laravel App
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout latest code
+        uses: actions/checkout@v4
+
+      - name: Set up SSH & Deploy
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            # Exit on any error
+            set -e
+
+            # Navigate to your Laravel project
+            cd /var/www/html/weather-api
+
+            # Add safe directory exception for Git
+            sudo git config --global --add safe.directory /var/www/html/weather-api
+
+            # Pull the latest code
+            sudo git pull origin main
+
+            # Enable Laravel maintenance mode
+            sudo php artisan down || true
+
+            # Install Composer dependencies
+            composer install --no-dev --optimize-autoloader
+
+            # Run database migrations
+            sudo php artisan migrate --force
+
+            # Install npm dependencies
+            sudo npm install
+
+            # Build frontend assets
+            sudo npm run build
+
+            # Clear Laravel caches
+            sudo php artisan cache:clear
+            sudo php artisan config:clear
+            sudo php artisan route:clear
+            sudo php artisan view:clear
+
+            # Disable maintenance mode
+            sudo php artisan up
+
+            echo "Deployment complete!"
