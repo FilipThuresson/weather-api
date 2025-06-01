@@ -2,23 +2,45 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Middleware\CheckClientToken;
 use App\Http\Requests\StoreWeatherLogRequest;
 use App\Http\Requests\UpdateWeatherLogRequest;
 use App\Models\WeatherLog;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Controllers\HasMiddleware;
+use Illuminate\Routing\Controllers\Middleware;
 
-class WeatherLogController extends Controller
+class WeatherLogController extends Controller implements HasMiddleware
 {
+    public static function middleware(): array
+
+    {
+        return [
+            new Middleware(CheckClientToken::class, only: ['store']),
+        ];
+
+    }
+
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(Request $request)
     {
-        return WeatherLog::all()->map(function ($log) {
-            $log->created_at = $log->created_at->timezone('Europe/Stockholm')->toDateTimeString();
-            $log->updated_at = $log->updated_at->timezone('Europe/Stockholm')->toDateTimeString();
-            return $log;
-        });
+        $query = WeatherLog::query();
+
+        if ($request->has('date')) {
+            $query->whereDate('created_at', $request->date);
+        }
+
+        if ($request->has('from_date')) {
+            $query->whereDate('created_at', '>=', $request->from_date);
+        }
+
+        if ($request->has('to_date')) {
+            $query->whereDate('created_at', '<=', $request->to_date);
+        }
+
+        return $query->paginate(100);
     }
 
     /**
@@ -30,6 +52,7 @@ class WeatherLogController extends Controller
             'temperature' => 'required|numeric',
             'humidity' => 'required|numeric',
         ]);
+        $data['client_id'] = $request->get('client_id');
 
         $weatherLog = WeatherLog::create($data);
         return response()->json($weatherLog, 201);

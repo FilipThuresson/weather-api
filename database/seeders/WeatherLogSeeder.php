@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\WeatherLog;
+use Database\Factories\WeatherLogFactory;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -12,6 +14,5 @@ class WeatherLogSeeder extends Seeder
      */
     public function run(): void
     {
-        //
     }
 }
