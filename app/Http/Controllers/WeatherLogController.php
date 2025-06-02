@@ -28,16 +28,19 @@ class WeatherLogController extends Controller implements HasMiddleware
     {
         $query = WeatherLog::query();
 
-        if ($request->has('date')) {
+        // Use filled to ensure the parameter is present and not empty
+        if ($request->filled('date')) {
+            // If a specific date is provided, use it exclusively
             $query->whereDate('created_at', $request->date);
-        }
+        } else {
+            // Otherwise, check for a date range
+            if ($request->filled('from_date')) {
+                $query->whereDate('created_at', '>=', $request->from_date);
+            }
 
-        if ($request->has('from_date')) {
-            $query->whereDate('created_at', '>=', $request->from_date);
-        }
-
-        if ($request->has('to_date')) {
-            $query->whereDate('created_at', '<=', $request->to_date);
+            if ($request->filled('to_date')) {
+                $query->whereDate('created_at', '<=', $request->to_date);
+            }
         }
 
         return $query->paginate(100);
